@@ -570,43 +570,37 @@ class SqlGeneratorTool(BaseTool):
     
     def _format_value(self, value: str, database_type: str) -> str:
         """
-        Format a value according to the database type.
-        
-        Args:
-            value: The value to format.
-            database_type: The database type.
-            
-        Returns:
-            The formatted value.
+        Format a value with improved SQL injection protection.
         """
         if value is None:
             return "NULL"
         
-        # Check if the value is a number
+        # Handle numeric values
         if isinstance(value, (int, float)) or (isinstance(value, str) and value.replace('.', '', 1).isdigit()):
             return str(value)
         
-        # Check for special values
+        # Handle special values
         if value.upper() == "NULL":
             return "NULL"
         elif value.upper() == "TRUE":
             return "TRUE" if database_type in ["postgresql"] else "1"
         elif value.upper() == "FALSE":
             return "FALSE" if database_type in ["postgresql"] else "0"
-        elif value.upper() == "CURRENT_TIMESTAMP" or value.upper() == "NOW()":
-            if database_type == "mysql":
-                return "NOW()"
-            elif database_type == "postgresql" or database_type == "sqlite":
-                return "CURRENT_TIMESTAMP"
-            elif database_type == "sqlserver":
-                return "GETDATE()"
-            elif database_type == "oracle":
-                return "SYSDATE"
-            else:
-                return "CURRENT_TIMESTAMP"
+        elif value.upper() in ["CURRENT_TIMESTAMP", "NOW()"]:
+            # Handle timestamp functions for each database
+            timestamp_funcs = {
+                "mysql": "NOW()",
+                "postgresql": "CURRENT_TIMESTAMP",
+                "sqlite": "CURRENT_TIMESTAMP",
+                "sqlserver": "GETDATE()",
+                "oracle": "SYSDATE"
+            }
+            return timestamp_funcs.get(database_type, "CURRENT_TIMESTAMP")
         
-        # Default: treat as string
-        return f"'{value.replace('\'', '\'\'')}'"
+        # Default: properly escape string values for all database types
+        # Double single quotes for SQL escape
+        escaped = value.replace("'", "''")
+        return f"'{escaped}'"
     
     def _map_column_type(self, column_type: str, database_type: str) -> str:
         """

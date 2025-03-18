@@ -204,8 +204,10 @@ class ShortTermMemory(BaseMemory):
         del self.items[identifier]
         del self.access_times[identifier]
         del self.creation_times[identifier]
-        
-        # Note: The item will remain in the LRU queue, but will be skipped when it's popped
+
+        # Rebuild the LRU queue to prevent memory leaks
+        self.lru_queue = [(time, id) for time, id in self.lru_queue if id in self.items]
+        heapq.heapify(self.lru_queue)
         
         logging.debug(f"Deleted item {identifier[:8]}")
         return True
