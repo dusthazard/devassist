@@ -1,0 +1,30 @@
+# config.yaml
+agent:
+  name: devassist
+  mode: auto
+  max_iterations: 10
+  complexity_threshold: 7
+
+memory:
+  short_term:
+    capacity: 1000
+    ttl: 3600
+  long_term:
+    enabled: true
+    storage_path: null
+    index_in_memory: true
+
+models:
+  default:
+    provider: anthropic
+    model: claude-3-7-sonnet-20250219
+    temperature: 0.0
+
+tools:
+  enabled:
+    - api_endpoint
+    - database_model
+    - react_component
+    - calculator
+    - search
+    - text
